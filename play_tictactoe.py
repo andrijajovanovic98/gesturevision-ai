@@ -15,9 +15,15 @@ No image or video is ever saved.
 import cv2
 import mediapipe as mp
 
+import importlib
+
 from gesturevision import config
 from gesturevision.gestures import GestureRecognizer
-from gesturevision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
+
+# Tic-Tac-Toe logic lives in games/2_tictactoe/ (folder starts with a digit).
+_logic = importlib.import_module("games.2_tictactoe.logic")
+TicTacToe = _logic.TicTacToe
+HUMAN, AI, EMPTY = _logic.HUMAN, _logic.AI, _logic.EMPTY
 
 WINDOW_NAME = "Gesture Tic-Tac-Toe"
 

@@ -89,13 +89,18 @@ While in the Playground the app also shows your status from the webcam:
 
 ```
 gesturevision-ai/
-├── gesturevision/          # Core package (modular, well commented)
+├── games/                  # One folder per game/mode (the plug-in games)
+│   ├── 1_pinch_playground/ # Pinch practice + finger/presence overlay
+│   │   └── __init__.py     #   draw()
+│   └── 2_tictactoe/        # Gesture Tic-Tac-Toe
+│       ├── __init__.py     #   draw() + cell_from_point()
+│       └── logic.py        #   game rules + minimax AI (no webcam)
+├── gesturevision/          # Shared infrastructure (used by every game)
 │   ├── __init__.py
 │   ├── config.py           # All tunable settings in one place
 │   ├── detector.py         # MediaPipe face detection wrapper (metadata only)
 │   ├── hands.py            # MediaPipe Hands wrapper + finger counting
 │   ├── gestures.py         # Pointing + pinch gesture recognition
-│   ├── tictactoe.py        # Tic-Tac-Toe rules + minimax AI (no webcam)
 │   ├── ui.py               # On-screen menu & pinch-clickable buttons
 │   ├── tracker.py          # PRESENT/AWAY state machine + timing
 │   ├── logger.py           # Local CSV logging (privacy-first)
@@ -105,7 +110,7 @@ gesturevision-ai/
 │   └── test_tictactoe.py   # Unit tests for the game + minimax AI
 ├── data/                   # Local log lives here (git-ignored)
 ├── start.py                # One-click launcher (sets up venv, deps, runs app)
-├── app.py                  # Unified hand-controlled hub (menu + modes)
+├── app.py                  # Hub: webcam loop, menu, wires up the games/
 ├── run_tracker.py          # Presence-tracking mode only (standalone)
 ├── play_tictactoe.py       # Tic-Tac-Toe only (standalone)
 ├── dashboard.py            # Streamlit dashboard (read-only)
@@ -113,6 +118,11 @@ gesturevision-ai/
 ├── .gitignore
 └── README.md
 ```
+
+Each game is a self-contained folder in `games/`. The shared building blocks
+(gesture detection, face detection, menu UI, logging) stay in `gesturevision/`.
+Adding a new game means creating the next numbered folder and wiring one block
+into `app.py` — see the contributing guide below.
 
 ---
 
@@ -232,7 +242,7 @@ never the image.
   requires releasing the pinch before the next click registers, so one pinch
   never fires twice.
 
-`tictactoe.py` holds the pure game rules plus a **minimax** AI. Minimax
+`games/2_tictactoe/logic.py` holds the pure game rules plus a **minimax** AI. Minimax
 explores every possible continuation of the game, scoring a win for the AI as
 positive and a loss as negative, and assumes the human plays optimally too.
 It then picks the move with the best guaranteed outcome — which makes the

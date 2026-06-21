@@ -34,41 +34,58 @@ pytest
 
 ## How the app is structured
 
-- **`gesturevision/`** — the core package (one job per file):
+- **`games/`** — one folder per game/mode. Each game is self-contained:
+  - `games/1_pinch_playground/` — pinch practice mode
+  - `games/2_tictactoe/` — `logic.py` (pure rules + minimax) and `__init__.py`
+    (drawing). A clean example to copy.
+- **`gesturevision/`** — shared building blocks used by every game:
   - `gestures.py` — pointing + pinch detection (your input device)
-  - `tictactoe.py` — an example of pure game logic with no webcam code
   - `ui.py` — the on-screen menu and its buttons
   - `detector.py`, `hands.py`, `tracker.py`, `stats.py`, `logger.py`, `config.py`
-- **`app.py`** — the hub: one webcam loop that switches between *states*
-  (menu, Pinch Playground, Tic-Tac-Toe).
+- **`app.py`** — the hub: one webcam loop that switches between *states* and
+  calls into each game's folder.
 - **`tests/`** — unit tests for the logic that doesn't need a webcam.
 
-The golden rule: **keep game/logic code separate from the webcam/drawing
-code**, exactly like `tictactoe.py` (pure rules) vs. its drawing in `app.py`.
+The golden rule: **keep game logic separate from webcam/drawing code**, exactly
+like `games/2_tictactoe/logic.py` (pure rules) vs. its `__init__.py` (drawing).
 This makes the logic easy to unit-test.
+
+> Note: the game folders start with a number (`1_`, `2_`, ...) so they sort
+> nicely. Because a module name can't start with a digit, the hub loads them
+> with `importlib.import_module("games.2_tictactoe")` rather than a plain
+> `import`. Just copy the pattern.
 
 ---
 
 ## Adding a new game to the menu — step by step
 
-Let's say you want to add a game called **"Rock Paper Scissors"**.
+Let's say you want to add **"Rock Paper Scissors"** as game number 3.
 
-### 1. Write the game logic (no webcam!)
+### 1. Create your game folder
 
-Create `gesturevision/rps.py` with a small, testable class — just the rules,
-no OpenCV. Follow the style of `gesturevision/tictactoe.py`.
+Make `games/3_rock_paper_scissors/` with two files:
 
-```python
-class RockPaperScissors:
-    def play(self, player_move: str) -> str:
-        """Return 'win', 'lose' or 'draw' for the player's move."""
-        ...
-```
+- `logic.py` — the pure rules, **no OpenCV** (so it can be unit-tested):
+  ```python
+  class RockPaperScissors:
+      def play(self, player_move: str) -> str:
+          """Return 'win', 'lose' or 'draw' for the player's move."""
+          ...
+  ```
+- `__init__.py` — exposes what the hub needs and does the drawing. Copy the
+  shape of `games/2_tictactoe/__init__.py`:
+  ```python
+  from .logic import RockPaperScissors
+
+  def draw(frame, game, ...):
+      ...  # use cv2 + gesturevision.ui helpers
+  ```
 
 ### 2. Add a unit test
 
 Create `tests/test_rps.py` and test the rules without a webcam, like
-`tests/test_tictactoe.py` does. This is required for game logic.
+`tests/test_tictactoe.py` does (it imports the logic via `importlib`). Required
+for game logic.
 
 ### 3. Add a menu button
 
@@ -86,14 +103,15 @@ items = [
 
 ### 4. Wire it into the hub (`app.py`)
 
-1. Add a state constant near the top:
+1. Load your game near the other `importlib.import_module(...)` lines:
    ```python
-   MENU, FOCUS, TICTACTOE, RPS = "menu", "focus", "tictactoe", "rps"
+   rps = importlib.import_module("games.3_rock_paper_scissors")
    ```
-2. In the menu handling, switch to your state when the button is pinched (and,
-   optionally, with its number key).
-3. Add an `elif state == RPS:` block inside the main loop that reads the
-   gesture, updates your game, and draws it.
+2. Add a state constant: `RPS = "rps"`.
+3. In the menu handling, switch to `RPS` when the button is pinched (and, with
+   the matching number key).
+4. Add an `elif state == RPS:` block in the main loop that reads the gesture,
+   updates your game, and calls `rps.draw(...)`.
 
 Use the existing `TICTACTOE` block as a template — it shows how to read the
 pinch, debounce it with `pinch_armed`, and draw an overlay.

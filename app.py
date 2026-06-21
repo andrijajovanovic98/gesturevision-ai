@@ -14,137 +14,30 @@ Inside any mode, press 'b' to go back to the menu, or 'q' to quit.
 Everything runs locally; the webcam is only read in memory, never saved.
 """
 
+import importlib
+
 import cv2
-import mediapipe as mp
 
 from gesturevision import config, ui
 from gesturevision.detector import FaceDetector
 from gesturevision.hands import HandCounter
 from gesturevision.gestures import GestureRecognizer
 from gesturevision.tracker import PresenceTracker
-from gesturevision.stats import format_duration
-from gesturevision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
 
-# Drawing helpers / colors.
-_mp_drawing = mp.solutions.drawing_utils
-_mp_hands = mp.solutions.hands
-GREEN = (0, 200, 0)
-RED = (0, 0, 255)
-ORANGE = (0, 165, 255)
-WHITE = (255, 255, 255)
-CYAN = (255, 255, 0)
-YELLOW = (0, 215, 255)
-BLUE = (255, 180, 0)
-GREY = (90, 90, 90)
+# Games live in their own numbered folders under games/. Because those folder
+# names start with a digit, we load them with importlib instead of a plain
+# `import games.2_tictactoe`. Adding a new game = add a folder + one line here.
+pinch_playground = importlib.import_module("games.1_pinch_playground")
+tictactoe = importlib.import_module("games.2_tictactoe")
+
+# Convenient aliases for the Tic-Tac-Toe logic exposed by its package.
+TicTacToe = tictactoe.TicTacToe
+HUMAN = tictactoe.HUMAN
 
 # Screen states.
 MENU, FOCUS, TICTACTOE = "menu", "focus", "tictactoe"
 
 WINDOW_NAME = "GestureVision AI"
-
-# Tic-Tac-Toe board geometry.
-BOARD_SIZE = 360
-MARGIN_TOP = 80
-CELL = BOARD_SIZE // 3
-
-
-# --------------------------------------------------------------------------
-# Pinch Playground drawing
-# --------------------------------------------------------------------------
-def draw_focus(frame, tracker, face, hands_info):
-    """Render the Pinch Playground overlay (presence, head, fingers)."""
-    color = GREEN if tracker.status == config.STATUS_PRESENT else RED
-    cv2.putText(frame, f"Status: {tracker.status}", (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
-    cv2.putText(frame, f"This interval: {format_duration(tracker.current_interval_seconds())}",
-                (10, 65), cv2.FONT_HERSHEY_SIMPLEX, 0.6, WHITE, 1)
-
-    if face.detected:
-        cv2.putText(frame, f"Head: {face.head_direction}", (10, 95),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, WHITE, 1)
-        if face.too_close:
-            cv2.putText(frame, "TOO CLOSE!", (10, 125),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, ORANGE, 2)
-
-    if tracker.long_sitting_warning():
-        cv2.putText(frame, "Time for a break! (45+ min)", (10, 160),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, ORANGE, 2)
-
-    # Hand skeleton + finger count.
-    for hand_landmarks in hands_info.landmarks:
-        _mp_drawing.draw_landmarks(frame, hand_landmarks, _mp_hands.HAND_CONNECTIONS)
-    if hands_info.hands_detected:
-        cv2.putText(frame, f"Fingers: {hands_info.total_fingers}",
-                    (config.FRAME_WIDTH - 260, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.1, CYAN, 3)
-
-    ui.draw_back_hint(frame)
-
-
-def draw_pinch_counter(frame, count):
-    """Show the pinch practice counter and a short hint."""
-    cv2.putText(frame, "Pinch Playground - practice your pinch!",
-                (10, config.FRAME_HEIGHT - 70),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, YELLOW, 1)
-    cv2.putText(frame, f"Pinches: {count}",
-                (10, config.FRAME_HEIGHT - 40),
-                cv2.FONT_HERSHEY_SIMPLEX, 1.0, CYAN, 3)
-
-
-# --------------------------------------------------------------------------
-# Tic-Tac-Toe drawing & geometry
-# --------------------------------------------------------------------------
-def _board_origin():
-    return (config.FRAME_WIDTH - BOARD_SIZE) // 2, MARGIN_TOP
-
-
-def _cell_from_point(px, py):
-    x0, y0 = _board_origin()
-    if not (x0 <= px < x0 + BOARD_SIZE and y0 <= py < y0 + BOARD_SIZE):
-        return None
-    return int(((py - y0) // CELL) * 3 + (px - x0) // CELL)
-
-
-def draw_tictactoe(frame, game, hover, difficulty):
-    x0, y0 = _board_origin()
-
-    if hover is not None and game.is_empty(hover) and not game.is_over():
-        r, c = divmod(hover, 3)
-        cv2.rectangle(frame, (x0 + c * CELL, y0 + r * CELL),
-                      (x0 + (c + 1) * CELL, y0 + (r + 1) * CELL), (50, 50, 50), -1)
-
-    win = game.winning_line()
-    if win:
-        for idx in win:
-            r, c = divmod(idx, 3)
-            cv2.rectangle(frame, (x0 + c * CELL, y0 + r * CELL),
-                          (x0 + (c + 1) * CELL, y0 + (r + 1) * CELL), (0, 80, 0), -1)
-
-    for i in range(1, 3):
-        cv2.line(frame, (x0 + i * CELL, y0), (x0 + i * CELL, y0 + BOARD_SIZE), WHITE, 2)
-        cv2.line(frame, (x0, y0 + i * CELL), (x0 + BOARD_SIZE, y0 + i * CELL), WHITE, 2)
-    cv2.rectangle(frame, (x0, y0), (x0 + BOARD_SIZE, y0 + BOARD_SIZE), WHITE, 2)
-
-    for idx, mark in enumerate(game.board):
-        if mark == EMPTY:
-            continue
-        r, c = divmod(idx, 3)
-        cx, cy = x0 + c * CELL + CELL // 2, y0 + r * CELL + CELL // 2
-        if mark == HUMAN:
-            d = CELL // 4
-            cv2.line(frame, (cx - d, cy - d), (cx + d, cy + d), GREEN, 4)
-            cv2.line(frame, (cx - d, cy + d), (cx + d, cy - d), GREEN, 4)
-        else:
-            cv2.circle(frame, (cx, cy), CELL // 4, RED, 4)
-
-    cv2.putText(frame, "Tic-Tac-Toe", (x0, 40),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, WHITE, 2)
-    cv2.putText(frame, f"AI: {difficulty.upper()}  (e/h)  r=restart",
-                (x0, y0 + BOARD_SIZE + 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, YELLOW, 1)
-    if game.result_text():
-        cv2.putText(frame, game.result_text(), (x0, y0 + BOARD_SIZE + 80),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, BLUE, 2)
-    ui.draw_back_hint(frame)
 
 
 # --------------------------------------------------------------------------
@@ -242,8 +135,7 @@ def main():
                 if not g.is_pinching:
                     pinch_armed = True
 
-                draw_focus(frame, tracker, face, hands_info)
-                draw_pinch_counter(frame, pinch_count)
+                pinch_playground.draw(frame, tracker, face, hands_info, pinch_count)
 
             # ---------------- TIC-TAC-TOE ----------------
             elif state == TICTACTOE:
@@ -252,7 +144,7 @@ def main():
                 if g.hand_detected and g.index_pos:
                     px = int(g.index_pos[0] * config.FRAME_WIDTH)
                     py = int(g.index_pos[1] * config.FRAME_HEIGHT)
-                    hover = _cell_from_point(px, py)
+                    hover = tictactoe.cell_from_point(px, py)
                     ui.draw_cursor(frame, px, py, g.is_pinching)
 
                     if g.is_pinching and pinch_armed:
@@ -262,7 +154,7 @@ def main():
                             game.make_move(hover, HUMAN)
                             if not game.is_over():
                                 game.ai_move(difficulty)
-                draw_tictactoe(frame, game, hover, difficulty)
+                tictactoe.draw(frame, game, hover, difficulty)
 
                 # Re-arm whenever no pinch is active (hand released OR no hand).
                 if not g.is_pinching:

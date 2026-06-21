@@ -6,9 +6,13 @@ These run without a webcam. The key guarantees we check:
   - the AI takes an immediate win and blocks an immediate loss.
 """
 
+import importlib
 import random
 
-from gesturevision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
+# The game folder name starts with a digit, so import it via importlib.
+_logic = importlib.import_module("games.2_tictactoe.logic")
+TicTacToe = _logic.TicTacToe
+HUMAN, AI, EMPTY = _logic.HUMAN, _logic.AI, _logic.EMPTY
 
 
 def test_detects_row_win():
