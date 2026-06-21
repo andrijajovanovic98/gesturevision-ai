@@ -271,6 +271,17 @@ The `data/` folder is git-ignored so your personal logs never get committed.
 
 ---
 
+## Contributing
+
+Want to add the next game to the menu, or improve something? Contributions are
+very welcome!
+
+**[Read the contributing guide](docs/CONTRIBUTING.md)** — it walks you
+through adding a new gesture-controlled game to the menu, step by step, and
+opening a pull request.
+
+---
+
 ## License
 
 MIT — free to use, learn from, and build on.
