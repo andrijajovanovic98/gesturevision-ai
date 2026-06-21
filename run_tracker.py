@@ -25,6 +25,8 @@ _mp_drawing = mp.solutions.drawing_utils
 _mp_hands = mp.solutions.hands
 
 
+WINDOW_NAME = "GestureVision AI"
+
 # Colors (BGR) for the on-screen overlay.
 GREEN = (0, 200, 0)
 RED = (0, 0, 255)
@@ -98,6 +100,9 @@ def main() -> None:
         if config.ENABLE_FINGER_COUNTING else None
     )
 
+    # WINDOW_GUI_NORMAL lets the window's X (close) button work.
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+
     try:
         with FaceDetector() as detector:
             while True:
@@ -125,9 +130,13 @@ def main() -> None:
                     hands_info = hand_counter.detect(frame_rgb)
                     _draw_hands(frame, hands_info)
 
-                cv2.imshow("GestureVision AI", frame)
+                cv2.imshow(WINDOW_NAME, frame)
 
-                if cv2.waitKey(1) & 0xFF == ord("q"):
+                # Stop on 'q' or when the window is closed with the X button.
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
+                    break
+                if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
                     break
     finally:
         tracker.flush()  # save the in-progress interval

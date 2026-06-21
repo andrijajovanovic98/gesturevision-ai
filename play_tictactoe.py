@@ -19,6 +19,8 @@ from focusvision import config
 from focusvision.gestures import GestureRecognizer
 from focusvision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
 
+WINDOW_NAME = "Gesture Tic-Tac-Toe"
+
 # Drawing helpers (BGR colors).
 WHITE = (255, 255, 255)
 GREY = (90, 90, 90)
@@ -131,6 +133,9 @@ def main() -> None:
 
     print("Gesture Tic-Tac-Toe running. Pinch to place, 'q' to quit.")
 
+    # WINDOW_GUI_NORMAL lets the window's X (close) button work.
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+
     try:
         with GestureRecognizer() as recognizer:
             while True:
@@ -168,9 +173,14 @@ def main() -> None:
                         pinch_armed = True  # re-arm once released
 
                 _draw_board(frame, game, hover, difficulty, game.result_text())
-                cv2.imshow("Gesture Tic-Tac-Toe", frame)
+                cv2.imshow(WINDOW_NAME, frame)
 
                 key = cv2.waitKey(1) & 0xFF
+
+                # Stop if the window was closed with the X button. (waitKey must
+                # run first so the window event is processed.)
+                if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+                    break
                 if key == ord("q"):
                     break
                 elif key == ord("r"):

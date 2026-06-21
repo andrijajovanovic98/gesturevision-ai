@@ -40,6 +40,8 @@ GREY = (90, 90, 90)
 # Screen states.
 MENU, FOCUS, TICTACTOE = "menu", "focus", "tictactoe"
 
+WINDOW_NAME = "GestureVision AI"
+
 # Tic-Tac-Toe board geometry.
 BOARD_SIZE = 360
 MARGIN_TOP = 80
@@ -163,6 +165,10 @@ def main():
 
     print("GestureVision AI running. Point + pinch in the menu to choose.")
 
+    # WINDOW_GUI_NORMAL makes the window's X (close) button report correctly
+    # via WND_PROP_VISIBLE, so the app can be closed without the keyboard.
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+
     try:
         while True:
             ok, frame = cap.read()
@@ -236,10 +242,16 @@ def main():
                 if not g.is_pinching:
                     pinch_armed = True
 
-            cv2.imshow("GestureVision AI", frame)
+            cv2.imshow(WINDOW_NAME, frame)
 
             # ---------------- Keyboard ----------------
             key = cv2.waitKey(1) & 0xFF
+
+            # Stop if the window was closed with the X button. (waitKey must run
+            # first so the window event is processed.)
+            if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+                break
+
             if key == ord("q"):
                 break
             elif key == ord("b"):
