@@ -1,0 +1,8 @@
+opencv-python>=4.8.0,<4.10
+# Pinned: mediapipe 0.10.35 dropped the classic `mp.solutions` API this
+# project uses. 0.10.14 is the last stable release that still ships it and
+# works on Python 3.11.
+mediapipe==0.10.14
+streamlit>=1.30.0
+pandas>=2.0.0,<2.3
+numpy>=1.24.0,<2.0

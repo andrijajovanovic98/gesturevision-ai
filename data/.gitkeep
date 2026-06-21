@@ -1,0 +1,4 @@
+# This folder holds the local CSV event log (events.csv).
+# It is intentionally kept empty in version control.
+# Privacy: only metadata (timestamp, status, duration) is ever stored here -
+# never images or video.
