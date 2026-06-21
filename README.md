@@ -7,10 +7,9 @@ gesture-controlled game against an AI. It also includes a presence/head-tracking
 mode as a bonus. Everything runs **100% locally** — no webcam frames are ever
 stored or sent to any external service.
 
-<!-- Add a screenshot or GIF of the app here once recorded, e.g.:
-![GestureVision AI demo](docs/demo.gif)
-Tip: record the menu, finger counting, and a Tic-Tac-Toe game. -->
-![GestureVision AI demo](docs/demo.png)
+<!-- Demo image goes here. Record a short GIF/screenshot of the menu, the
+Pinch Playground and a Tic-Tac-Toe game, save it as docs/demo.gif (or .png),
+then add:  ![GestureVision AI demo](docs/demo.gif) -->
 
 ---
 
