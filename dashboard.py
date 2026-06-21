@@ -13,8 +13,8 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from focusvision import config
-from focusvision.stats import (
+from gesturevision import config
+from gesturevision.stats import (
     load_dataframe,
     daily_summary,
     format_duration,
@@ -85,7 +85,7 @@ st.dataframe(
 
 # --- CSV export ------------------------------------------------------------
 st.subheader("Export")
-export_name = f"focusvision_{selected_day}.csv"
+export_name = f"gesturevision_{selected_day}.csv"
 if st.button("Prepare daily summary CSV"):
     out_path = config.DATA_DIR / export_name
     export_daily_csv(out_path, selected_day)

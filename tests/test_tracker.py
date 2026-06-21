@@ -6,9 +6,9 @@ controlling time via the injectable `now` argument.
 
 from datetime import datetime, timedelta
 
-from focusvision import config
-from focusvision.tracker import PresenceTracker
-from focusvision import logger as fv_logger
+from gesturevision import config
+from gesturevision.tracker import PresenceTracker
+from gesturevision import logger as fv_logger
 
 
 def _make_tracker(tmp_path, monkeypatch):

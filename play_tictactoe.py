@@ -15,9 +15,9 @@ No image or video is ever saved.
 import cv2
 import mediapipe as mp
 
-from focusvision import config
-from focusvision.gestures import GestureRecognizer
-from focusvision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
+from gesturevision import config
+from gesturevision.gestures import GestureRecognizer
+from gesturevision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
 
 WINDOW_NAME = "Gesture Tic-Tac-Toe"
 

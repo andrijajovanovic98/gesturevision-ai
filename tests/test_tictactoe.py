@@ -8,7 +8,7 @@ These run without a webcam. The key guarantees we check:
 
 import random
 
-from focusvision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
+from gesturevision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
 
 
 def test_detects_row_win():

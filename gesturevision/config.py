@@ -7,7 +7,7 @@ and lets beginners experiment without digging through the logic files.
 from pathlib import Path
 
 # --- Paths -----------------------------------------------------------------
-# Project root = the folder that contains the `focusvision` package.
+# Project root = the folder that contains the `gesturevision` package.
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 LOG_FILE = DATA_DIR / "events.csv"

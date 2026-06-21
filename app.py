@@ -2,11 +2,11 @@
 
     python app.py
 
-Starts the webcam and shows a menu. Point with your index finger and PINCH
-(touch thumb + index) to choose:
+Starts the webcam and shows a menu. Point and PINCH (touch thumb + index), or
+press the number keys, to choose:
 
-    1. Focus Tracker  - PRESENT/AWAY status, head direction, finger counting
-    2. Tic-Tac-Toe    - play against a minimax AI using hand gestures
+    1. Pinch Playground - practice pinching (counter) + finger/presence info
+    2. Tic-Tac-Toe      - play against a minimax AI using hand gestures
     3. Quit
 
 Inside any mode, press 'b' to go back to the menu, or 'q' to quit.
@@ -17,13 +17,13 @@ Everything runs locally; the webcam is only read in memory, never saved.
 import cv2
 import mediapipe as mp
 
-from focusvision import config, ui
-from focusvision.detector import FaceDetector
-from focusvision.hands import HandCounter
-from focusvision.gestures import GestureRecognizer
-from focusvision.tracker import PresenceTracker
-from focusvision.stats import format_duration
-from focusvision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
+from gesturevision import config, ui
+from gesturevision.detector import FaceDetector
+from gesturevision.hands import HandCounter
+from gesturevision.gestures import GestureRecognizer
+from gesturevision.tracker import PresenceTracker
+from gesturevision.stats import format_duration
+from gesturevision.tictactoe import TicTacToe, HUMAN, AI, EMPTY
 
 # Drawing helpers / colors.
 _mp_drawing = mp.solutions.drawing_utils
@@ -49,10 +49,10 @@ CELL = BOARD_SIZE // 3
 
 
 # --------------------------------------------------------------------------
-# Focus Tracker drawing
+# Pinch Playground drawing
 # --------------------------------------------------------------------------
 def draw_focus(frame, tracker, face, hands_info):
-    """Render the focus tracker overlay (presence, head, fingers)."""
+    """Render the Pinch Playground overlay (presence, head, fingers)."""
     color = GREEN if tracker.status == config.STATUS_PRESENT else RED
     cv2.putText(frame, f"Status: {tracker.status}", (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
@@ -79,6 +79,16 @@ def draw_focus(frame, tracker, face, hands_info):
                     cv2.FONT_HERSHEY_SIMPLEX, 1.1, CYAN, 3)
 
     ui.draw_back_hint(frame)
+
+
+def draw_pinch_counter(frame, count):
+    """Show the pinch practice counter and a short hint."""
+    cv2.putText(frame, "Pinch Playground - practice your pinch!",
+                (10, config.FRAME_HEIGHT - 70),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, YELLOW, 1)
+    cv2.putText(frame, f"Pinches: {count}",
+                (10, config.FRAME_HEIGHT - 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.0, CYAN, 3)
 
 
 # --------------------------------------------------------------------------
@@ -162,6 +172,7 @@ def main():
     state = MENU
     difficulty = "hard"
     pinch_armed = True  # debounce: require release between pinch clicks
+    pinch_count = 0     # practice counter for the Pinch Playground
 
     print("GestureVision AI running. Point + pinch in the menu to choose.")
 
@@ -198,6 +209,7 @@ def main():
                             break
                         elif hover_btn.action == "focus":
                             tracker.start_session()
+                            pinch_count = 0
                             state = FOCUS
                         elif hover_btn.action == "tictactoe":
                             game.reset()
@@ -210,14 +222,28 @@ def main():
                 if not g.is_pinching:
                     pinch_armed = True
 
-            # ---------------- FOCUS TRACKER ----------------
+            # ---------------- PINCH PLAYGROUND ----------------
             elif state == FOCUS:
                 face = face_detector.detect(frame_rgb)
                 hands_info = hand_counter.detect(frame_rgb)
                 tracker.update(face_detected=face.detected,
                                head_direction=face.head_direction,
                                too_close=face.too_close)
+
+                # Practice pinching: each completed pinch bumps the counter.
+                g = gestures.detect(frame_rgb)
+                if g.hand_detected and g.index_pos:
+                    px = int(g.index_pos[0] * config.FRAME_WIDTH)
+                    py = int(g.index_pos[1] * config.FRAME_HEIGHT)
+                    ui.draw_cursor(frame, px, py, g.is_pinching)
+                if g.is_pinching and pinch_armed:
+                    pinch_armed = False
+                    pinch_count += 1
+                if not g.is_pinching:
+                    pinch_armed = True
+
                 draw_focus(frame, tracker, face, hands_info)
+                draw_pinch_counter(frame, pinch_count)
 
             # ---------------- TIC-TAC-TOE ----------------
             elif state == TICTACTOE:
@@ -259,6 +285,17 @@ def main():
                     tracker.flush()  # save the open interval before leaving
                 state = MENU
                 pinch_armed = True
+            elif state == MENU:
+                # Number keys select menu items, just like pinching them.
+                if key == ord("1"):
+                    tracker.start_session()
+                    pinch_count = 0
+                    state = FOCUS
+                elif key == ord("2"):
+                    game.reset()
+                    state = TICTACTOE
+                elif key == ord("3"):
+                    break
             elif state == TICTACTOE:
                 if key == ord("r"):
                     game.reset()

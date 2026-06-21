@@ -55,21 +55,27 @@ Everything runs **locally** — no cloud services, no network calls.
 
 A single entry point opens a webcam menu you navigate **with your hand** —
 point with your index finger and **pinch** (touch thumb + index) to choose a
-mode. Press `b` to return to the menu, `q` to quit.
+mode. You can also use the **number keys 1 / 2 / 3** to pick a menu item.
+Press `b` to return to the menu, `q` to quit, or just close the window's `X`.
 
 ### Gesture features (the main attraction)
 
+- **Pinch Playground** — a practice mode to learn the pinch gesture: every
+  pinch you make bumps a live counter. It also shows live finger counting and
+  your presence/head info while you practise.
 - **Live finger counting** — hold up your hand(s) and it shows how many fingers
   you are raising (0–10 with two hands), with a hand skeleton overlay.
 - **Pinch-to-click control** — point and pinch to drive the menu and the game,
-  no keyboard or mouse needed.
+  no keyboard or mouse needed. Detection is **rotation- and distance-robust**
+  (it measures the pinch relative to your hand size, so simply rotating your
+  hand does not trigger a false click).
 - **Gesture Tic-Tac-Toe** — hover a cell and pinch to place your X. The
   opponent uses the **minimax** algorithm and is **unbeatable on Hard**
   (switch Easy/Hard with `e`/`h`, restart with `r`).
 
-### Presence-tracking mode (bonus)
+### Presence-tracking (bonus, inside the Pinch Playground)
 
-A secondary mode that shows your status from the webcam:
+While in the Playground the app also shows your status from the webcam:
 - **PRESENT** / **AWAY** real-time status with a short grace period.
 - Basic **head direction**: looking left / right / center.
 - "Too close to screen" warning and a long-sitting break reminder.
@@ -83,7 +89,7 @@ A secondary mode that shows your status from the webcam:
 
 ```
 gesturevision-ai/
-├── focusvision/            # Core package (modular, well commented)
+├── gesturevision/          # Core package (modular, well commented)
 │   ├── __init__.py
 │   ├── config.py           # All tunable settings in one place
 │   ├── detector.py         # MediaPipe face detection wrapper (metadata only)
@@ -219,10 +225,12 @@ never the image.
 `gestures.py` turns hand landmarks into two simple controls:
 
 - **Pointing** — the index fingertip is used as an on-screen cursor.
-- **Pinch (click)** — when the thumb tip and index tip come close together
-  (normalised distance below a threshold), it counts as a click. A small
-  "re-arm" rule requires releasing the pinch before the next click registers,
-  so one pinch never fires twice.
+- **Pinch (click)** — the thumb-to-index distance is compared **relative to
+  the hand's own size** (wrist → middle knuckle). Using a ratio instead of a
+  raw distance makes the click independent of how far away or rotated the hand
+  is, so rotating your hand does not cause false pinches. A small "re-arm" rule
+  requires releasing the pinch before the next click registers, so one pinch
+  never fires twice.
 
 `tictactoe.py` holds the pure game rules plus a **minimax** AI. Minimax
 explores every possible continuation of the game, scoring a win for the AI as

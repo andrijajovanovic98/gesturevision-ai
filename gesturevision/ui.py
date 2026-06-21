@@ -46,7 +46,7 @@ def build_menu_buttons() -> List[Button]:
     first_y = 140
 
     items = [
-        ("1. Focus Tracker", "focus"),
+        ("1. Pinch Playground", "focus"),
         ("2. Tic-Tac-Toe (hand)", "tictactoe"),
         ("3. Quit", "quit"),
     ]
@@ -68,7 +68,8 @@ def draw_menu(frame, buttons: List[Button], hover: Optional[Button],
 
     cv2.putText(frame, "GestureVision AI", (config.FRAME_WIDTH // 2 - 185, 60),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, WHITE, 3)
-    cv2.putText(frame, "Point and pinch to choose", (config.FRAME_WIDTH // 2 - 165, 100),
+    cv2.putText(frame, "Pinch to choose, or press 1 / 2 / 3",
+                (config.FRAME_WIDTH // 2 - 200, 100),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, YELLOW, 1)
 
     for btn in buttons:

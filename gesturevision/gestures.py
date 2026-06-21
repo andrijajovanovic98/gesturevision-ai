@@ -17,13 +17,16 @@ from typing import Optional, Tuple
 import mediapipe as mp
 
 # Landmark indices we use.
+_WRIST = 0
 _THUMB_TIP = 4
 _INDEX_TIP = 8
+_MIDDLE_MCP = 9   # base knuckle of the middle finger (a stable size reference)
 
-# Pinch when the normalised distance between thumb & index tips is below this.
-# Distance is in MediaPipe's 0..1 coordinate space (fraction of frame size).
-# A slightly generous threshold makes the "click" easier and more reliable.
-PINCH_THRESHOLD = 0.08
+# Pinch is decided by the thumb-index distance *relative to the hand's own
+# size* (wrist -> middle knuckle). Using a ratio instead of a raw distance
+# makes detection independent of how far away or rotated the hand is, so
+# rotating the hand no longer triggers false pinches.
+PINCH_RATIO_THRESHOLD = 0.45
 
 
 @dataclass
@@ -61,13 +64,22 @@ class GestureRecognizer:
         index_tip = lm[_INDEX_TIP]
         thumb_tip = lm[_THUMB_TIP]
 
-        distance = hypot(index_tip.x - thumb_tip.x, index_tip.y - thumb_tip.y)
+        # Distance between thumb and index tips.
+        tip_distance = hypot(index_tip.x - thumb_tip.x, index_tip.y - thumb_tip.y)
+
+        # Reference: the size of the hand itself (wrist -> middle knuckle).
+        # Scales with distance and stays stable when the hand rotates.
+        wrist = lm[_WRIST]
+        middle_mcp = lm[_MIDDLE_MCP]
+        hand_size = hypot(wrist.x - middle_mcp.x, wrist.y - middle_mcp.y)
+
+        ratio = tip_distance / max(hand_size, 1e-6)
 
         return GestureInfo(
             hand_detected=True,
             index_pos=(index_tip.x, index_tip.y),
-            is_pinching=distance < PINCH_THRESHOLD,
-            pinch_distance=distance,
+            is_pinching=ratio < PINCH_RATIO_THRESHOLD,
+            pinch_distance=ratio,
         )
 
     def close(self) -> None:

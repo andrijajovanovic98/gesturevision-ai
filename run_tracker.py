@@ -14,11 +14,11 @@ anywhere.
 import cv2
 import mediapipe as mp
 
-from focusvision import config
-from focusvision.detector import FaceDetector
-from focusvision.hands import HandCounter
-from focusvision.tracker import PresenceTracker
-from focusvision.stats import format_duration
+from gesturevision import config
+from gesturevision.detector import FaceDetector
+from gesturevision.hands import HandCounter
+from gesturevision.tracker import PresenceTracker
+from gesturevision.stats import format_duration
 
 # MediaPipe drawing helpers for the hand skeleton overlay.
 _mp_drawing = mp.solutions.drawing_utils
